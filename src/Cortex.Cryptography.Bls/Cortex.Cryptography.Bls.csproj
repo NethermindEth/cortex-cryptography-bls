@@ -29,7 +29,7 @@ Based on the Herumi cryptography library.
   </PropertyGroup>
 
   <ItemGroup>
-    <None Include="..\..\lib\bls384_256.dll" Link="bls384_256.dll">
+    <None Include="..\..\lib\bls384_256.dll" Link="bls384_256.dll" Pack="true" PackagePath="runtimes\win-x64\native">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>
