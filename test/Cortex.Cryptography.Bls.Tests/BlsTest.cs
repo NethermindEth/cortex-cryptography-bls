@@ -41,38 +41,8 @@ namespace Cortex.Cryptography.Tests
             "328388aff0d4a5b7dc9205abd374e7e98f3cd9f3418edb4eafda5fb16473d216",
         };
 
-        //[TestMethod]
-        //public void BlsInitialXAndSign()
-        //{
-        //    var privateKey = HexMate.Convert.FromHexString(PrivateKeys[0]);
-        //    var messageHash = MessageHashes[0];
-        //    //var domain = Domains[0];
-        //    var domain = new byte[] { 0x00 };
-
-        //    Console.WriteLine("Input:");
-        //    Console.WriteLine("Private Key: [{0}] {1}", privateKey.Length, HexMate.Convert.ToHexString(privateKey));
-        //    Console.WriteLine("Domain: [{0}] {1}", domain.Length, HexMate.Convert.ToHexString(domain));
-        //    Console.WriteLine("MessageHash: [{0}] {1}", messageHash.Length, HexMate.Convert.ToHexString(messageHash));
-
-        //    var parameters = new BLSParameters()
-        //    {
-        //        PrivateKey = privateKey
-        //    };
-        //    using var bls = new BLSHerumi(parameters);
-        //    var initialX = new byte[96];
-        //    _ = bls.TryCombineHashAndDomain(messageHash, domain, initialX, out var _);
-
-        //    Console.WriteLine("InitialX: [{0}] {1}", initialX.Length, HexMate.Convert.ToHexString(initialX));
-
-        //    var result = new byte[96];
-        //    var success = bls.TrySignHash(initialX, result.AsSpan(), out var bytesWritten);
-
-        //    Console.WriteLine("Output:");
-        //    Console.WriteLine("Signature: {0} [{1}] {2}", success, bytesWritten, HexMate.Convert.ToHexString(result));
-        //}
-
         [TestMethod]
-        public void BlsInitialXAndSign()
+        public void BlsRoundtripSignAndVerify()
         {
             // Arrange
             var privateKey = HexMate.Convert.FromHexString(PrivateKeys[1]);
@@ -124,68 +94,63 @@ namespace Cortex.Cryptography.Tests
             verifySuccess2.ShouldBeTrue();
         }
 
-        //private byte[] HashToG2Compressed(byte[] messageHash, byte[] domain)
-        //{
-        //    var HashAlgorithm = System.Security.Cryptography.SHA256.Create();
+        [TestMethod]
+        public void BlsRoundtripAggregateSignAndVerify()
+        {
+            // Arrange
+            var privateKey1 = HexMate.Convert.FromHexString(PrivateKeys[1]);
+            var privateKey2 = HexMate.Convert.FromHexString(PrivateKeys[2]);
+            var messageHash1 = MessageHashes[1];
+            var messageHash2 = MessageHashes[2];
+            var domain1 = Domains[1];
 
-        //    var xRealInput = new Span<byte>(new byte[messageHash.Length + domain.Length + 1]);
-        //    messageHash.CopyTo(xRealInput);
-        //    domain.CopyTo(xRealInput.Slice(messageHash.Length));
-        //    xRealInput[messageHash.Length + domain.Length] = 0x01;
-        //    var xReal = new Span<byte>(new byte[32]);
-        //    var xRealSuccess = HashAlgorithm.TryComputeHash(xRealInput, xReal, out var xRealBytesWritten);
-        //    if (!xRealSuccess || xRealBytesWritten != 32)
-        //    {
-        //        throw new Exception("Error in getting G2 real component from hash.");
-        //    }
+            Console.WriteLine("Input:");
+            Console.WriteLine("Private Key 1: [{0}] {1}", privateKey1.Length, HexMate.Convert.ToHexString(privateKey1));
+            Console.WriteLine("MessageHash 1: [{0}] {1}", messageHash1.Length, HexMate.Convert.ToHexString(messageHash1));
+            Console.WriteLine("Private Key 2: [{0}] {1}", privateKey2.Length, HexMate.Convert.ToHexString(privateKey2));
+            Console.WriteLine("MessageHash 2: [{0}] {1}", messageHash2.Length, HexMate.Convert.ToHexString(messageHash2));
+            Console.WriteLine("Domain: [{0}] {1}", domain1.Length, HexMate.Convert.ToHexString(domain1));
 
-        //    var xImaginaryInput = new Span<byte>(new byte[messageHash.Length + domain.Length + 1]);
-        //    messageHash.CopyTo(xImaginaryInput);
-        //    domain.CopyTo(xImaginaryInput.Slice(messageHash.Length));
-        //    xImaginaryInput[messageHash.Length + domain.Length] = 0x02;
-        //    var xImaginary = new Span<byte>(new byte[32]);
-        //    var xImaginarySuccess = HashAlgorithm.TryComputeHash(xImaginaryInput, xImaginary, out var xImaginaryBytesWritten);
-        //    if (!xImaginarySuccess || xImaginaryBytesWritten != 32)
-        //    {
-        //        throw new Exception("Error in getting G2 imaginary component from hash.");
-        //    }
+            // Sign 1
+            using var bls1 = new BLSHerumi(new BLSParameters() { PrivateKey = privateKey1 });
+            var signature1 = new byte[96];
+            _ = bls1.TrySignHash(messageHash1, signature1.AsSpan(), out var _, domain1);
+            Console.WriteLine("Signature 1: [{0}] {1}", signature1.Length, HexMate.Convert.ToHexString(signature1));
+            var publicKey1 = new byte[48];
+            _ = bls1.TryExportBLSPublicKey(publicKey1, out var _);
+            Console.WriteLine("Public Key 1: [{0}] {1}", publicKey1.Length, HexMate.Convert.ToHexString(publicKey1));
 
-        //    Console.WriteLine("xReal Hash: [{0}] {1}", xReal.Length, HexMate.Convert.ToHexString(xReal));
-        //    Console.WriteLine("xImaginary Hash: [{0}] {1}", xImaginary.Length, HexMate.Convert.ToHexString(xImaginary));
+            // Sign 2
+            using var bls2 = new BLSHerumi(new BLSParameters() { PrivateKey = privateKey2 });
+            var signature2 = new byte[96];
+            _ = bls2.TrySignHash(messageHash2, signature2.AsSpan(), out var _, domain1);
+            Console.WriteLine("Signature 2: [{0}] {1}", signature2.Length, HexMate.Convert.ToHexString(signature2));
+            var publicKey2 = new byte[48];
+            _ = bls2.TryExportBLSPublicKey(publicKey2, out var _);
+            Console.WriteLine("Public Key 2: [{0}] {1}", publicKey2.Length, HexMate.Convert.ToHexString(publicKey2));
 
-        //    if (BitConverter.IsLittleEndian)
-        //    {
-        //        for (var i = 0; i < xReal.Length; i += 8)
-        //        {
-        //            xReal.Slice(i, 8).Reverse();
-        //            xImaginary.Slice(i, 8).Reverse();
-        //        }
-        //    }
+            // Aggregate verify
+            var signatures = new Span<byte>(new byte[96 * 2]);
+            signature1.CopyTo(signatures);
+            signature2.CopyTo(signatures.Slice(96));
+            using var blsAggregate = new BLSHerumi(new BLSParameters());
+            var aggregateSignature = new byte[96];
+            blsAggregate.TryAggregateSignatures(signatures, aggregateSignature, out var _);
+            Console.WriteLine("Aggregate Signature: [{0}] {1}", aggregateSignature.Length, HexMate.Convert.ToHexString(aggregateSignature));
 
-        //    var xFp2 = new Bls384Interop.MclBnFp2();
-        //    xFp2.d_0.d_2 = BitConverter.ToUInt64(xReal.Slice(0, 8));
-        //    xFp2.d_0.d_3 = BitConverter.ToUInt64(xReal.Slice(8, 8));
-        //    xFp2.d_0.d_4 = BitConverter.ToUInt64(xReal.Slice(16, 8));
-        //    xFp2.d_0.d_5 = BitConverter.ToUInt64(xReal.Slice(24, 8));
-        //    xFp2.d_1.d_2 = BitConverter.ToUInt64(xImaginary.Slice(0, 8));
-        //    xFp2.d_1.d_3 = BitConverter.ToUInt64(xImaginary.Slice(8, 8));
-        //    xFp2.d_1.d_4 = BitConverter.ToUInt64(xImaginary.Slice(16, 8));
-        //    xFp2.d_1.d_5 = BitConverter.ToUInt64(xImaginary.Slice(24, 8));
+            // Aggregate verify
+            using var blsVerify = new BLSHerumi(new BLSParameters());
+            var publicKeys = new Span<byte>(new byte[48 * 2]);
+            publicKey1.CopyTo(publicKeys);
+            publicKey2.CopyTo(publicKeys.Slice(48));
+            var hashes = new Span<byte>(new byte[32 * 2]);
+            messageHash1.CopyTo(hashes);
+            messageHash2.CopyTo(hashes.Slice(32));
+            var verifySuccess = blsVerify.VerifyAggregate(publicKeys, hashes, aggregateSignature, domain1);
+            Console.WriteLine("Verify1: {0}", verifySuccess);
 
-        //    //var xFp2RealSpan = MemoryMarshal.CreateSpan(ref xFp2.d_0, 1);
-        //    //MemoryMarshal.Cast<byte, Bls384Interop.MclBnFp>(xReal).CopyTo(xFp2RealSpan);
-        //    //var xFp2ImaginarySpan = MemoryMarshal.CreateSpan(ref xFp2.d_1, 1);
-        //    //MemoryMarshal.Cast<byte, Bls384Interop.MclBnFp>(xImaginary).CopyTo(xFp2ImaginarySpan);
-
-        //    var fp2Buffer = new byte[1000];
-        //    var fp2BytesWritten = Bls384Interop.mclBnFp2_serialize(fp2Buffer, fp2Buffer.Length, xFp2);
-        //    if (fp2BytesWritten != 96)
-        //    {
-        //        //throw new Exception("Error serializing FP2.");
-        //    }
-
-        //    return new Span<byte>(fp2Buffer).Slice(0, fp2BytesWritten).ToArray();
-        //}
+            verifySuccess.ShouldBeTrue();
+        }
 
         [DataTestMethod]
         [DynamicData(nameof(Case03PrivateToPublicKeyData), DynamicDataSourceType.Method)]

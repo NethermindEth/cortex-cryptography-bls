@@ -54,6 +54,10 @@ namespace Cortex.Cryptography
         [DllImport(DllName, EntryPoint = "blsInit")]
         public static extern int Init(int curve, int compiledTimeVar);
 
+        //BLS_DLL_API void blsPublicKeyAdd(blsPublicKey *pub, const blsPublicKey *rhs);
+        [DllImport(DllName, EntryPoint = "blsPublicKeyAdd")]
+        public static extern void PublicKeyAdd(ref BlsPublicKey pub, BlsPublicKey rhs);
+
         //BLS_DLL_API mclSize blsPublicKeyDeserialize(blsPublicKey* pub, const void* buf, mclSize bufSize);
         [DllImport(DllName, EntryPoint = "blsPublicKeyDeserialize")]
         public static extern unsafe int PublicKeyDeserialize(out BlsPublicKey pub, byte* buf, int bufSize);
@@ -115,6 +119,14 @@ namespace Cortex.Cryptography
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
         [DllImport(DllName, EntryPoint = "blsVerify")]
         public static extern unsafe int Verify(BlsSignature sig, BlsPublicKey pub, byte* m, int size);
+
+        //verify aggSig with pubVec[0, n) and hVec[0, n)
+        //e(aggSig, Q) = prod_i e(hVec[i], pubVec[i])
+        //return 1 if valid
+        //@note do not check duplication of hVec
+        //BLS_DLL_API int blsVerifyAggregatedHashes(const blsSignature* aggSig, const blsPublicKey* pubVec, const void* hVec, size_t sizeofHash, mclSize n);
+        [DllImport(DllName, EntryPoint = "blsVerifyAggregatedHashes")]
+        public static extern unsafe int VerifyAggregateHashes(BlsSignature aggSig, BlsPublicKey[] pubVec, byte* hVec, int sizeofHash, int n);
 
         // return 1 if valid
         //BLS_DLL_API int blsVerifyHash(const blsSignature* sig, const blsPublicKey* pub, const void* h, mclSize size);

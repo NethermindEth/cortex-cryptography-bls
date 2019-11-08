@@ -135,6 +135,15 @@ namespace Cortex.Cryptography
         public abstract void ImportParameters(BLSParameters parameters);
 
         /// <summary>
+        /// Combines the provided public keys into a single public key value.
+        /// </summary>
+        /// <param name="publicKeys">Byte span of concatenated public key bytes; must be a multiple of the public key length.</param>
+        /// <param name="destination">Span to write the combined public key to.</param>
+        /// <param name="bytesWritten">Output the number of bytes written.</param>
+        /// <returns>true if the public key aggregation was successful; false if the destination is not large enough to hold the result</returns>
+        public abstract bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, Span<byte> destination, out int bytesWritten);
+
+        /// <summary>
         /// Combines the provided signatures into a single signature value.
         /// </summary>
         /// <param name="signatures">Byte span of concatenated signature bytes; must be a multiple of the signature length.</param>
@@ -183,7 +192,7 @@ namespace Cortex.Cryptography
         /// Checks the provided aggregate signature matches the combined provided public keys and hashes (with optional domain).
         /// </summary>
         /// <param name="publicKeys">Span of concatenated public key bytes; must be a multiple of the public key length.</param>
-        /// <param name="hashes">Span of concatenated hashes; length divided evenly by the number of public keys, so all hashes must be the same length..</param>
+        /// <param name="hashes">Span of concatenated hashes; length divided evenly by the number of public keys, so all hashes must be the same length.</param>
         /// <param name="aggregateSignature">The aggregate signature to check against the data.</param>
         /// <param name="domain">Optional additional data for the hash to point function (if needed).</param>
         /// <returns>true if the aggregate signature is valid; false if invalid</returns>

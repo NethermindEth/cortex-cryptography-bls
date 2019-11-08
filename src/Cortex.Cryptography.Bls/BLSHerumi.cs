@@ -1,6 +1,4 @@
 ﻿using System;
-using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 
 namespace Cortex.Cryptography
@@ -73,6 +71,65 @@ namespace Cortex.Cryptography
 
             _privateKey = parameters.PrivateKey?.AsSpan().ToArray();
             _publicKey = parameters.PublicKey?.AsSpan().ToArray();
+        }
+
+        public override bool TryAggregatePublicKeys(ReadOnlySpan<byte> publicKeys, Span<byte> destination, out int bytesWritten)
+        {
+            // This is independent of the keys set, although other parameters (type of curve, variant, scheme, etc) are relevant.
+
+            if (publicKeys.Length % PublicKeyLength != 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(publicKeys), publicKeys.Length, $"Public key data must be a multiple of the public key length {PublicKeyLength}.");
+            }
+            if (destination.Length < PublicKeyLength)
+            {
+                bytesWritten = 0;
+                return false;
+            }
+
+            EnsureInitialised();
+
+            Bls384Interop.BlsPublicKey aggregateBlsPublicKey = default;
+            for (var index = 0; index < publicKeys.Length; index += PublicKeyLength)
+            {
+                var publicKeySlice = publicKeys.Slice(index, PublicKeyLength);
+                Bls384Interop.BlsPublicKey blsPublicKey;
+                int publickKeyBytesRead;
+                unsafe
+                {
+                    // Using fixed pointer for input data allows us to pass a slice
+                    fixed (byte* publicKeyPtr = publicKeySlice)
+                    {
+                        publickKeyBytesRead = Bls384Interop.PublicKeyDeserialize(out blsPublicKey, publicKeyPtr, PublicKeyLength);
+                    }
+                }
+                if (publickKeyBytesRead != PublicKeyLength)
+                {
+                    throw new Exception($"Error deserializing BLS public key, length: {publickKeyBytesRead}");
+                }
+                if (index == 0)
+                {
+                    aggregateBlsPublicKey = blsPublicKey;
+                }
+                else
+                {
+                    Bls384Interop.PublicKeyAdd(ref aggregateBlsPublicKey, blsPublicKey);
+                }
+            }
+
+            unsafe
+            {
+                // Using fixed pointer for output data allows us to write directly to destination
+                fixed (byte* destinationPtr = destination)
+                {
+                    bytesWritten = Bls384Interop.PublicKeySerialize(destinationPtr, PublicKeyLength, aggregateBlsPublicKey);
+                }
+            }
+            if (bytesWritten != PublicKeyLength)
+            {
+                throw new Exception($"Error serializing BLS public key, length: {bytesWritten}");
+            }
+            return true;
         }
 
         /// <inheritdoc />
@@ -292,8 +349,95 @@ namespace Cortex.Cryptography
         /// <inheritdoc />
         public override bool VerifyAggregate(ReadOnlySpan<byte> publicKeys, ReadOnlySpan<byte> hashes, ReadOnlySpan<byte> aggregateSignature, ReadOnlySpan<byte> domain = default)
         {
-            // This is going to ignore the public (if any) and verify the provided public keys.
-            throw new NotImplementedException();
+            // This is independent of the keys set, although other parameters (type of curve, variant, scheme, etc) are relevant.
+
+            if (aggregateSignature.Length != SignatureLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(aggregateSignature), aggregateSignature.Length, $"Signature must be {SignatureLength} bytes long.");
+            }
+            if (publicKeys.Length % PublicKeyLength != 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(publicKeys), publicKeys.Length, $"Public key data must be a multiple of the public key length {PublicKeyLength}.");
+            }
+            var publicKeyCount = publicKeys.Length / PublicKeyLength;
+            if (hashes.Length % publicKeyCount != 0)
+            {
+                throw new ArgumentOutOfRangeException(nameof(hashes), hashes.Length, $"Hashes must all be the same length, with total bytes evenly divisble by the number of public keys, {publicKeyCount}.");
+            }
+
+            EnsureInitialised();
+
+            ReadOnlySpan<byte> hashesToCheck;
+            int hashToCheckLength;
+            if (domain.Length > 0)
+            {
+                hashToCheckLength = 2 * InitialXPartLength;
+                var hashLength = hashes.Length / publicKeyCount;
+                var combined = new Span<byte>(new byte[publicKeyCount * hashToCheckLength]);
+                var combinedIndex = 0;
+                for (var hashIndex = 0; hashIndex < hashes.Length; hashIndex += hashLength)
+                {
+                    var hashSlice = hashes.Slice(hashIndex, hashLength);
+                    var combinedSlice = combined.Slice(combinedIndex, hashToCheckLength);
+                    var combineSuccess = TryCombineHashAndDomain(hashSlice, domain, combinedSlice, out var combineBytesWritten);
+                    if (!combineSuccess || combineBytesWritten != hashToCheckLength)
+                    {
+                        throw new Exception("Error combining the hash and domain.");
+                    }
+                    combinedIndex += hashToCheckLength;
+                }
+                hashesToCheck = combined;                
+            }
+            else
+            {
+                hashToCheckLength = hashes.Length / publicKeyCount;
+                hashesToCheck = hashes;
+            }
+
+            var blsPublicKeys = new Bls384Interop.BlsPublicKey[publicKeyCount];
+            var publicKeysIndex = 0;
+            for (var blsPublicKeyIndex = 0; blsPublicKeyIndex < publicKeyCount; blsPublicKeyIndex++)
+            {
+                var publicKey = publicKeys.Slice(publicKeysIndex, PublicKeyLength);
+                int publicKeyBytesRead;
+                unsafe
+                {
+                    fixed (byte* publicKeyPtr = publicKey)
+                    {
+                        publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(out blsPublicKeys[blsPublicKeyIndex], publicKeyPtr, PublicKeyLength);
+                    }
+                }
+                if (publicKeyBytesRead != PublicKeyLength)
+                {
+                    throw new Exception($"Error deserializing BLS public key {blsPublicKeyIndex}, length: {publicKeyBytesRead}");
+                }
+                publicKeysIndex += PublicKeyLength;
+            }
+
+            Bls384Interop.BlsSignature aggregateBlsSignature;
+            int signatureBytesRead;
+            unsafe
+            {
+                fixed (byte* signaturePtr = aggregateSignature)
+                {
+                    signatureBytesRead = Bls384Interop.SignatureDeserialize(out aggregateBlsSignature, signaturePtr, SignatureLength);
+                }
+            }
+            if (signatureBytesRead != aggregateSignature.Length)
+            {
+                throw new Exception($"Error deserializing BLS signature, length: {signatureBytesRead}");
+            }
+
+            int result;
+            unsafe
+            {
+                fixed (byte* hashPtr = hashesToCheck)
+                {
+                    result = Bls384Interop.VerifyAggregateHashes(aggregateBlsSignature, blsPublicKeys, hashPtr, hashToCheckLength, publicKeyCount);
+                }
+            }
+
+            return (result == 1);
         }
 
         /// <inheritdoc />
@@ -360,7 +504,7 @@ namespace Cortex.Cryptography
             int result;
             unsafe
             {
-                fixed(byte* hashPtr = hashToCheck)
+                fixed (byte* hashPtr = hashToCheck)
                 {
                     result = Bls384Interop.VerifyHash(blsSignature, blsPublicKey, hashPtr, hashToCheck.Length);
                 }
