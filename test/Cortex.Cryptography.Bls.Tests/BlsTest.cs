@@ -504,5 +504,43 @@ namespace Cortex.Cryptography.Tests
                 HexMate.Convert.FromHexString("ab9f94aae5846301760be418a6f0ccb96178fbfab15ad50755da993c2d1ea4278638eb5157002f0f31824e42d83d6eb018271f6f28f27582bc2dd54820a74af898c6e6ab4cc24368465f0af6026501896f2dbc3f26a55ff0bce2dc378b070e08"),
             };
         }
+
+        [DataTestMethod]
+        [DynamicData(nameof(Case07AggregatePublicKeysData), DynamicDataSourceType.Method)]
+        public void Case07AggregatePublicKeys(byte[][] publicKeys, byte[] expected)
+        {
+            // Arrange
+            var inputSpan = new Span<byte>(new byte[publicKeys.Length * 48]);
+            Console.WriteLine("Input: [{0}]", publicKeys.Length);
+            for (var index = 0; index < publicKeys.Length; index++)
+            {
+                publicKeys[index].CopyTo(inputSpan.Slice(index * 48));
+                Console.WriteLine("Public Key({0}): [{1}] {2}", index, publicKeys[index].Length, HexMate.Convert.ToHexString(publicKeys[index]));
+            }
+
+            // Act
+            using var bls = new BLSHerumi(new BLSParameters());
+            var result = new byte[48];
+            var success = bls.TryAggregatePublicKeys(inputSpan, result, out var bytesWritten);
+
+            Console.WriteLine("Output:");
+            Console.WriteLine("Combined: {0} [{1}] {2}", success, bytesWritten, HexMate.Convert.ToHexString(result));
+
+            // Assert
+            result.ShouldBe(expected);
+        }
+
+        public static IEnumerable<object[]> Case07AggregatePublicKeysData()
+        {
+            yield return new object[]
+            {
+                new byte[][] {
+                    HexMate.Convert.FromHexString("a491d1b0ecd9bb917989f0e74f0dea0422eac4a873e5e2644f368dffb9a6e20fd6e10c1b77654d067c0618f6e5a7f79a"),
+                    HexMate.Convert.FromHexString("b301803f8b5ac4a1133581fc676dfedc60d891dd5fa99028805e5ea5b08d3491af75d0707adab3b70c6a6a580217bf81"),
+                    HexMate.Convert.FromHexString("b53d21a4cfd562c469cc81514d4ce5a6b577d8403d32a394dc265dd190b47fa9f829fdd7963afdf972e5e77854051f6f"),
+                },
+                HexMate.Convert.FromHexString("a095608b35495ca05002b7b5966729dd1ed096568cf2ff24f3318468e0f3495361414a78ebc09574489bc79e48fca969"),
+            };
+        }
     }
 }
