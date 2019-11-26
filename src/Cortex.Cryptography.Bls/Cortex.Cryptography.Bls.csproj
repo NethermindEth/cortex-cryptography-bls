@@ -8,7 +8,7 @@
     <Version>0.0.1</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
-    <Description>Cryptography library the implements the ETH 2.0 version of the Boneh–Lynn–Shacham (BLS) signature scheme, for .NET Core.
+    <Description>Cryptography library that implements the ETH 2.0 version of the Boneh–Lynn–Shacham (BLS) signature scheme, for .NET Core.
 
 Supports converting private keys to public keys, signing and verifying ETH 2.0 message hash with domain, aggregating public keys and signatures, and verification of multiple public key/hash pairs against an aggregate signature.
 
