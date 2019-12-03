@@ -336,6 +336,29 @@ namespace Cortex.Cryptography
                 }
             }
 
+            // ReadOnlySpan<byte> hashToSign;
+            // if (domain.Length > 0)
+            // {
+            //     var combined = new byte[2 * InitialXPartLength];
+            //     var combineSuccess = TryCombineHashAndDomain(hash, domain, combined, out var combineBytesWritten);
+            //     if (!combineSuccess || combineBytesWritten != 2 * InitialXPartLength)
+            //     {
+            //         throw new Exception("Error combining the hash and domain.");
+            //     }
+            //     hashToSign = combined;
+            // }
+            // else
+            // {
+            //     hashToSign = hash;
+            // }
+            // unsafe
+            // {
+            //     fixed (byte* hashPtr = hash)
+            //     {
+            //         result = Bls384Interop.SignHash(out blsSignature, blsSecretKey, hashPtr, hash.Length);
+            //     }
+            // }
+
             if (result != 0)
             {
                 throw new Exception($"Error generating BLS signature for hash. Error: {result}");

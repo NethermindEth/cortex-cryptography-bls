@@ -222,7 +222,7 @@ namespace Test.Bls
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Test BLS");
+            Console.WriteLine("Test BLS, LE={0}", BitConverter.IsLittleEndian);
             Console.WriteLine();
 
             var curveType = MCL_BLS12_381;
@@ -233,7 +233,17 @@ namespace Test.Bls
             Console.WriteLine("Init Result {0}", ret);
             Console.WriteLine();
 
-            bls_use_stackTest();
+            try 
+            {
+                bls_use_stackTest();
+
+                Console.WriteLine("Finished. Press ENTER to exit.");
+                Console.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: {0}", ex);
+            }
         }
 
         static void bls_use_stackTest()
@@ -253,6 +263,10 @@ namespace Test.Bls
             Console.WriteLine("Public key: {0}", pub);
             Console.WriteLine();
 
+            sig = new blsSignature();
+            Console.WriteLine("Test : {0}", sig);
+
+            // BLS_DLL_API void blsSign(blsSignature *sig, const blsSecretKey *sec, const void *m, mclSize size);
             blsSign(out sig, sec, msgBytes, msgSize);
             Console.WriteLine("Signature : {0}", sig);
             Console.WriteLine();

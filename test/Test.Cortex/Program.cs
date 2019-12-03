@@ -11,7 +11,7 @@ namespace Test.Cortex
         private static IList<byte[]> Domains => new List<byte[]>
         {
             new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
-            // new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
+            new byte[] { 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01 },
             // new byte[] { 0x01, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
             // new byte[] { 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00 },
             // new byte[] { 0x01, 0x23, 0x45, 0x67, 0x89, 0xab, 0xcd, 0xef },
@@ -21,7 +21,7 @@ namespace Test.Cortex
         private static IList<byte[]> MessageHashes => new List<byte[]>
         {
             Enumerable.Repeat((byte)0x00, 32).ToArray(),
-            // Enumerable.Repeat((byte)0x56, 32).ToArray(),
+            Enumerable.Repeat((byte)0x56, 32).ToArray(),
             // Enumerable.Repeat((byte)0xab, 32).ToArray(),
         };
 
@@ -53,8 +53,8 @@ namespace Test.Cortex
         {
             // Arrange
             var privateKey = HexMate.Convert.FromHexString(PrivateKeys[1]);
-            var messageHash = MessageHashes[0];
-            var domain = Domains[0];
+            var messageHash = MessageHashes[1];
+            var domain = Domains[1];
 
             Console.WriteLine("Input:");
             Console.WriteLine("Private Key: [{0}] {1}", privateKey.Length, HexMate.Convert.ToHexString(privateKey));
@@ -79,14 +79,15 @@ namespace Test.Cortex
             Console.WriteLine("InitialX: [{0}] {1}", initialX.Length, HexMate.Convert.ToHexString(initialX));
 
             var signature = new byte[96];
-            var signatureSuccess = bls.TrySignHash(initialX, signature.AsSpan(), out var bytesWritten);
+//            var signatureSuccess = bls.TrySignHash(messageHash, signature.AsSpan(), out var bytesWritten, domain);
+            var signatureSuccess = bls.TrySignHash(messageHash, signature.AsSpan(), out var bytesWritten);
 
             Console.WriteLine("Signature: {0} [{1}] {2}", signatureSuccess, bytesWritten, HexMate.Convert.ToHexString(signature));
 
             //var expectedSignature = HexMate.Convert.FromHexString("b9d1bf921b3dd048bdce38c2ceac2a2a8093c864881f2415f22b198de935ffa791707855c1656dc21a7af2d502bb46590151d645f062634c3b2cb79c4ed1c4a4b8b3f19f0f5c76965c651553e83d153ff95353735156eff77692f7a62ae653fb");
             //signature.ShouldBe(expectedSignature);
 
-            var verifySuccess = bls.VerifyHash(initialX, signature);
+            var verifySuccess = bls.VerifyHash(messageHash, signature, domain);
             Console.WriteLine("Verify1: {0}", verifySuccess);
 
             var parameters2 = new BLSParameters()
@@ -95,7 +96,7 @@ namespace Test.Cortex
             };
             using var bls2 = new BLSHerumi(parameters);
 
-            var verifySuccess2 = bls2.VerifyHash(initialX, signature);
+            var verifySuccess2 = bls2.VerifyHash(messageHash, signature, domain);
             Console.WriteLine("Verify2: {0}", verifySuccess2);
         }
 

@@ -9,7 +9,7 @@ namespace Cortex.Cryptography
         public const int MCL_BLS12_381 = 5;
 
         //#define MCLBN_COMPILED_TIME_VAR ((MCLBN_FR_UNIT_SIZE) * 10 + (MCLBN_FP_UNIT_SIZE))
-        // The +100 is for BLS_SWAP_G
+        // The +200 is for BLS_ETH
         public const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
 
         private const string DllName = "bls384_256";
