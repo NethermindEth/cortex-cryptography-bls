@@ -28,8 +28,8 @@ namespace Test.Bls
         const int MCLBN_FR_UNIT_SIZE = 4;
 
         //#define MCLBN_COMPILED_TIME_VAR ((MCLBN_FR_UNIT_SIZE) * 10 + (MCLBN_FP_UNIT_SIZE))
-        // The +100 is for BLS_SWAP_G
-        public const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
+        // (the +200 is for BLS_ETH)
+        const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
 
         //typedef struct {
         //uint64_t d[MCLBN_FP_UNIT_SIZE];
@@ -194,7 +194,7 @@ namespace Test.Bls
 	        @note blsInit() is not thread safe
         */
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsInit(int curve, int compiledTimeVar);
 
         /*
@@ -202,21 +202,21 @@ namespace Test.Bls
 	        return 0 if success else -1
         */
         // BLS_DLL_API int blsSecretKeySetByCSPRNG(blsSecretKey* sec);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsSecretKeySetByCSPRNG(out blsSecretKey sec);
 
         // BLS_DLL_API void blsGetPublicKey(blsPublicKey* pub, const blsSecretKey* sec);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsGetPublicKey(out blsPublicKey pub, blsSecretKey sec);
 
         // calculate the has of m and sign the hash
         // BLS_DLL_API void blsSign(blsSignature* sig, const blsSecretKey* sec, const void* m, mclSize size);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsSign(out blsSignature sig, blsSecretKey sec, byte[] m, int size);
 
         // return 1 if valid
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsVerify(blsSignature sig, blsPublicKey pub, byte[] m, int size);
 
 
