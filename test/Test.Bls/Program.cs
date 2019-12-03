@@ -28,8 +28,8 @@ namespace Test.Bls
         const int MCLBN_FR_UNIT_SIZE = 4;
 
         //#define MCLBN_COMPILED_TIME_VAR ((MCLBN_FR_UNIT_SIZE) * 10 + (MCLBN_FP_UNIT_SIZE))
-        // (the +100 is for swap)
-        const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 100;
+        // The +100 is for BLS_SWAP_G
+        public const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
 
         //typedef struct {
         //uint64_t d[MCLBN_FP_UNIT_SIZE];

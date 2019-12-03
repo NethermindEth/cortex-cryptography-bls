@@ -59,11 +59,11 @@ To re-generate (not usually needed):
 
 * Install Visual Studio C++ tools
 * Get BLS, MCL, and cybozulib_ext projects
-* We want Eth 2.0 behavior (e.g. G1 (48 byte) as minmal public key) so modify bls\setvar.bat to change the CFLAGS line to define BLS_ETH: "set CFLAGS=%CFLAGS% /I ..\mcl\include /I ./ /DBLS_ETH"
-* Open 64-bit Visual Studio command prompt
+* Open x64 Native Tools Command Prompt for VS 2019 command prompt
+* We want Eth 2.0 behavior (e.g. G1 (48 byte) as minmal public key) so define BLS_ETH flag: "set CFLAGS=/DBLS_ETH"
 * Call "mklib.bat dll" for MCL, then BLS, as per instructions
 * (Can also compile and run test projects, as per instructions; NOTE: will use the modified setvar as above)
-* Copy the output DLL from bin folder to the library folder for Cortex
+* Copy the output DLL from "bin" folder to the library folder for Cortex
 
 ## Contributions
 

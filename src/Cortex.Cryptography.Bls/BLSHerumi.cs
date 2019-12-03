@@ -8,6 +8,7 @@ namespace Cortex.Cryptography
     /// </summary>
     public class BLSHerumi : BLS
     {
+        private const int DomainLength = 8;
         private const int HashLength = 32;
         private const int InitialXPartLength = 48;
         private const int PrivateKeyLength = 32;
@@ -203,32 +204,28 @@ namespace Cortex.Cryptography
                 return false;
             }
 
-            var xRealInput = new Span<byte>(new byte[hash.Length + domain.Length + 1]);
-            hash.CopyTo(xRealInput);
-            domain.CopyTo(xRealInput.Slice(hash.Length));
-            xRealInput[hash.Length + domain.Length] = 0x01;
-            var xReal = new byte[HashLength];
-            var xRealSuccess = HashAlgorithm.TryComputeHash(xRealInput, xReal, out var xRealBytesWritten);
-            if (!xRealSuccess || xRealBytesWritten != HashLength)
+            if (hash.Length != HashLength)
             {
-                throw new Exception("Error in getting G2 initial X real component from hash.");
+                throw new ArgumentOutOfRangeException(nameof(hash), hash.Length, $"Hash with domain must be {HashLength} bytes long.");
+            }
+            if (domain.Length != DomainLength)
+            {
+                throw new ArgumentOutOfRangeException(nameof(domain), domain.Length, $"Domain must be {DomainLength} bytes long.");
             }
 
-            var xImaginaryInput = new Span<byte>(new byte[hash.Length + domain.Length + 1]);
-            hash.CopyTo(xImaginaryInput);
-            domain.CopyTo(xImaginaryInput.Slice(hash.Length));
-            xImaginaryInput[hash.Length + domain.Length] = 0x02;
-            var xImaginary = new byte[HashLength];
-            var xImaginarySuccess = HashAlgorithm.TryComputeHash(xImaginaryInput, xImaginary, out var xImaginaryBytesWritten);
-            if (!xImaginarySuccess || xImaginaryBytesWritten != HashLength)
+            var hashWithDomain = new Span<byte>(new byte[HashLength + DomainLength]);
+            hash.CopyTo(hashWithDomain);
+            domain.CopyTo(hashWithDomain.Slice(HashLength));
+
+            unsafe
             {
-                throw new Exception("Error in getting G2 initial X imaginary component from hash.");
+                fixed (byte* destinationPtr = destination)
+                fixed (byte* hashPtr = hashWithDomain)
+                {
+                    Bls384Interop.HashWithDomainToFp2(destinationPtr, hashPtr);
+                }
             }
 
-            // Initial x value is an Fp2 value, x_re + x_im * i
-            // Big endian, so put in last 32 bytes of each part
-            xImaginary.CopyTo(destination.Slice(InitialXPartLength - HashLength));
-            xReal.CopyTo(destination.Slice(2 * InitialXPartLength - HashLength));
             bytesWritten = 2 * InitialXPartLength;
             return true;
         }
@@ -285,22 +282,6 @@ namespace Cortex.Cryptography
 
             EnsureInitialised();
 
-            ReadOnlySpan<byte> hashToSign;
-            if (domain.Length > 0)
-            {
-                var combined = new byte[2 * InitialXPartLength];
-                var combineSuccess = TryCombineHashAndDomain(hash, domain, combined, out var combineBytesWritten);
-                if (!combineSuccess || combineBytesWritten != 2 * InitialXPartLength)
-                {
-                    throw new Exception("Error combining the hash and domain.");
-                }
-                hashToSign = combined;
-            }
-            else
-            {
-                hashToSign = hash;
-            }
-
             // TODO: Generate random key if null
             // EnsurePrivateKey();
 
@@ -320,13 +301,41 @@ namespace Cortex.Cryptography
 
             Bls384Interop.BlsSignature blsSignature;
             int result;
-            unsafe
+
+            if (domain.Length > 0)
             {
-                fixed (byte* hashPtr = hashToSign)
+                if (hash.Length != HashLength)
                 {
-                    result = Bls384Interop.SignHash(out blsSignature, blsSecretKey, hashPtr, hashToSign.Length);
+                    throw new ArgumentOutOfRangeException(nameof(hash), hash.Length, $"Hash with domain must be {HashLength} bytes long.");
+                }
+                if (domain.Length != DomainLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(domain), domain.Length, $"Domain must be {DomainLength} bytes long.");
+                }
+
+                var hashWithDomain = new Span<byte>(new byte[HashLength + DomainLength]);
+                hash.CopyTo(hashWithDomain);
+                domain.CopyTo(hashWithDomain.Slice(HashLength));
+
+                unsafe
+                {
+                    fixed (byte* hashPtr = hashWithDomain)
+                    {
+                        result = Bls384Interop.SignHashWithDomain(out blsSignature, blsSecretKey, hashPtr);
+                    }
                 }
             }
+            else
+            {
+                unsafe
+                {
+                    fixed (byte* hashPtr = hash)
+                    {
+                        result = Bls384Interop.SignHash(out blsSignature, blsSecretKey, hashPtr, hash.Length);
+                    }
+                }
+            }
+
             if (result != 0)
             {
                 throw new Exception($"Error generating BLS signature for hash. Error: {result}");
@@ -367,33 +376,6 @@ namespace Cortex.Cryptography
 
             EnsureInitialised();
 
-            ReadOnlySpan<byte> hashesToCheck;
-            int hashToCheckLength;
-            if (domain.Length > 0)
-            {
-                hashToCheckLength = 2 * InitialXPartLength;
-                var hashLength = hashes.Length / publicKeyCount;
-                var combined = new Span<byte>(new byte[publicKeyCount * hashToCheckLength]);
-                var combinedIndex = 0;
-                for (var hashIndex = 0; hashIndex < hashes.Length; hashIndex += hashLength)
-                {
-                    var hashSlice = hashes.Slice(hashIndex, hashLength);
-                    var combinedSlice = combined.Slice(combinedIndex, hashToCheckLength);
-                    var combineSuccess = TryCombineHashAndDomain(hashSlice, domain, combinedSlice, out var combineBytesWritten);
-                    if (!combineSuccess || combineBytesWritten != hashToCheckLength)
-                    {
-                        throw new Exception("Error combining the hash and domain.");
-                    }
-                    combinedIndex += hashToCheckLength;
-                }
-                hashesToCheck = combined;                
-            }
-            else
-            {
-                hashToCheckLength = hashes.Length / publicKeyCount;
-                hashesToCheck = hashes;
-            }
-
             var blsPublicKeys = new Bls384Interop.BlsPublicKey[publicKeyCount];
             var publicKeysIndex = 0;
             for (var blsPublicKeyIndex = 0; blsPublicKeyIndex < publicKeyCount; blsPublicKeyIndex++)
@@ -429,11 +411,46 @@ namespace Cortex.Cryptography
             }
 
             int result;
-            unsafe
+            var hashLength = hashes.Length / publicKeyCount;
+
+            if (domain.Length > 0)
             {
-                fixed (byte* hashPtr = hashesToCheck)
+                if (hashLength != HashLength)
                 {
-                    result = Bls384Interop.VerifyAggregateHashes(aggregateBlsSignature, blsPublicKeys, hashPtr, hashToCheckLength, publicKeyCount);
+                    throw new ArgumentOutOfRangeException(nameof(hashes), hashes.Length, $"Hashes with domain must have total length {publicKeyCount * HashLength} (each should be {HashLength} bytes long, for {publicKeyCount} public keys).");
+                }
+                if (domain.Length != DomainLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(domain), domain.Length, $"Domain must be {DomainLength} bytes long.");
+                }
+
+                var combined = new Span<byte>(new byte[publicKeyCount * (HashLength + DomainLength)]);
+                var combinedIndex = 0;
+                for (var hashIndex = 0; hashIndex < hashes.Length; hashIndex += HashLength)
+                {
+                    var hashSlice = hashes.Slice(hashIndex, HashLength);
+                    hashSlice.CopyTo(combined.Slice(combinedIndex));
+                    combinedIndex += HashLength;
+                    domain.CopyTo(combined.Slice(combinedIndex));
+                    combinedIndex += DomainLength;
+                }
+
+                unsafe
+                {
+                    fixed (byte* hashPtr = combined)
+                    {
+                        result = Bls384Interop.VerifyAggregatedHashWithDomain(aggregateBlsSignature, blsPublicKeys, hashPtr, publicKeyCount);
+                    }
+                }
+            }
+            else
+            {
+                unsafe
+                {
+                    fixed (byte* hashPtr = hashes)
+                    {
+                        result = Bls384Interop.VerifyAggregateHashes(aggregateBlsSignature, blsPublicKeys, hashPtr, hashLength, publicKeyCount);
+                    }
                 }
             }
 
@@ -456,22 +473,6 @@ namespace Cortex.Cryptography
 
             EnsureInitialised();
             EnsurePublicKey();
-
-            ReadOnlySpan<byte> hashToCheck;
-            if (domain.Length > 0)
-            {
-                var combined = new byte[2 * InitialXPartLength];
-                var combineSuccess = TryCombineHashAndDomain(hash, domain, combined, out var combineBytesWritten);
-                if (!combineSuccess || combineBytesWritten != 2 * InitialXPartLength)
-                {
-                    throw new Exception("Error combining the hash and domain.");
-                }
-                hashToCheck = combined;
-            }
-            else
-            {
-                hashToCheck = hash;
-            }
 
             Bls384Interop.BlsPublicKey blsPublicKey;
             int publicKeyBytesRead;
@@ -502,11 +503,38 @@ namespace Cortex.Cryptography
             }
 
             int result;
-            unsafe
+
+            if (domain.Length > 0)
             {
-                fixed (byte* hashPtr = hashToCheck)
+                if (hash.Length != HashLength)
                 {
-                    result = Bls384Interop.VerifyHash(blsSignature, blsPublicKey, hashPtr, hashToCheck.Length);
+                    throw new ArgumentOutOfRangeException(nameof(hash), hash.Length, $"Hash with domain must be {HashLength} bytes long.");
+                }
+                if (domain.Length != DomainLength)
+                {
+                    throw new ArgumentOutOfRangeException(nameof(domain), domain.Length, $"Domain must be {DomainLength} bytes long.");
+                }
+
+                var hashWithDomain = new Span<byte>(new byte[HashLength + DomainLength]);
+                hash.CopyTo(hashWithDomain);
+                domain.CopyTo(hashWithDomain.Slice(HashLength));
+
+                unsafe
+                {
+                    fixed (byte* hashPtr = hashWithDomain)
+                    {
+                        result = Bls384Interop.VerifyHashWithDomain(blsSignature, blsPublicKey, hashPtr);
+                    }
+                }
+            }
+            else
+            {
+                unsafe
+                {
+                    fixed (byte* hashPtr = hash)
+                    {
+                        result = Bls384Interop.VerifyHash(blsSignature, blsPublicKey, hashPtr, hash.Length);
+                    }
                 }
             }
 
