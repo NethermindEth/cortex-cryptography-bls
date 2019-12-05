@@ -194,7 +194,7 @@ namespace Test.Bls
 	        @note blsInit() is not thread safe
         */
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsInit(int curve, int compiledTimeVar);
 
         /*
@@ -202,22 +202,42 @@ namespace Test.Bls
 	        return 0 if success else -1
         */
         // BLS_DLL_API int blsSecretKeySetByCSPRNG(blsSecretKey* sec);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsSecretKeySetByCSPRNG(out blsSecretKey sec);
 
         // BLS_DLL_API void blsGetPublicKey(blsPublicKey* pub, const blsSecretKey* sec);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsGetPublicKey(out blsPublicKey pub, blsSecretKey sec);
 
         // calculate the has of m and sign the hash
         // BLS_DLL_API void blsSign(blsSignature* sig, const blsSecretKey* sec, const void* m, mclSize size);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsSign(out blsSignature sig, blsSecretKey sec, byte[] m, int size);
 
         // return 1 if valid
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
-        [DllImport(@"bls384_256.dll")]
+        [DllImport(@"bls384_256")]
         public static extern int blsVerify(blsSignature sig, blsPublicKey pub, byte[] m, int size);
+
+
+        // return read byte size if success else 0
+        //BLS_DLL_API mclSize blsIdDeserialize(blsId* id, const void* buf, mclSize bufSize);
+        //BLS_DLL_API mclSize blsSecretKeyDeserialize(blsSecretKey* sec, const void* buf, mclSize bufSize);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsSecretKeyDeserialize(out blsSecretKey sec, byte* buf, int bufSize);
+
+        // return written byte size if success else 0
+        //BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);
+        //BLS_DLL_API mclSize blsSecretKeySerialize(void *buf, mclSize maxBufSize, const blsSecretKey *sec);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, blsSecretKey sec);
+
+        //set ETH serialization mode for BLS12-381
+        //@param ETHserialization [in] 1:enable,  0:disable
+        //@note ignore the flag if curve is not BLS12-381
+        //BLS_DLL_API void blsSetETHserialization(int ETHserialization);
+        [DllImport(@"bls384_256")]
+        public static extern void blsSetETHserialization(int ETHserialization);
 
 
         static void Main(string[] args)
@@ -245,13 +265,33 @@ namespace Test.Bls
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var msgSize = msgBytes.Length;
 
-            blsSecretKeySetByCSPRNG(out sec);
+            blsSetETHserialization(1);
+            Console.WriteLine("Eth serialization set");
+
+            var privateKeyBytes = new byte[] {
+                0x47, 0xb8, 0x19, 0x2d, 0x77, 0xbf, 0x87, 0x1b,
+                0x62, 0xe8, 0x78, 0x59, 0xd6, 0x53, 0x92, 0x27,
+                0x25, 0x72, 0x4a, 0x5c, 0x03, 0x1a, 0xfe, 0xab,
+                0xc6, 0x0b, 0xce, 0xf5, 0xff, 0x66, 0x51, 0x38 };
+
+            unsafe
+            {
+                fixed (byte* privateKeyPtr = privateKeyBytes)
+                {
+                    blsSecretKeyDeserialize(out sec, privateKeyPtr, privateKeyBytes.Length);
+                }
+            }
+            //blsSecretKeySetByCSPRNG(out sec);
             Console.WriteLine("Secret key: {0}", sec);
             Console.WriteLine();
 
             blsGetPublicKey(out pub, sec);
             Console.WriteLine("Public key: {0}", pub);
             Console.WriteLine();
+
+            blsSignature sig0 = new blsSignature();
+            int ret0 = blsVerify(sig0, pub, msgBytes, msgSize);
+            Console.WriteLine("Verify Fail {0}", ret0);
 
             blsSign(out sig, sec, msgBytes, msgSize);
             Console.WriteLine("Signature : {0}", sig);
