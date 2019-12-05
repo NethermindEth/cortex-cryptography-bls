@@ -1,0 +1,34 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cortex.Cryptography.Bls", "src\Cortex.Cryptography.Bls\Cortex.Cryptography.Bls.csproj", "{D389CFC9-692F-4BC7-BCB9-F02FFB7267B0}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Cortex.Cryptography.Bls.Tests", "test\Cortex.Cryptography.Bls.Tests\Cortex.Cryptography.Bls.Tests.csproj", "{D83852E6-067E-44BA-8699-9542B929BF68}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Bls", "test\Test.Bls\Test.Bls.csproj", "{AFCF0CB6-F930-46BE-AC32-15C39F73E543}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Test.Cortex", "test\Test.Cortex\Test.Cortex.csproj", "{758891B2-94B9-4470-A261-225E9E8289F5}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{D389CFC9-692F-4BC7-BCB9-F02FFB7267B0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D389CFC9-692F-4BC7-BCB9-F02FFB7267B0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D389CFC9-692F-4BC7-BCB9-F02FFB7267B0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D389CFC9-692F-4BC7-BCB9-F02FFB7267B0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{D83852E6-067E-44BA-8699-9542B929BF68}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{D83852E6-067E-44BA-8699-9542B929BF68}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{D83852E6-067E-44BA-8699-9542B929BF68}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{D83852E6-067E-44BA-8699-9542B929BF68}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AFCF0CB6-F930-46BE-AC32-15C39F73E543}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AFCF0CB6-F930-46BE-AC32-15C39F73E543}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AFCF0CB6-F930-46BE-AC32-15C39F73E543}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AFCF0CB6-F930-46BE-AC32-15C39F73E543}.Release|Any CPU.Build.0 = Release|Any CPU
+		{758891B2-94B9-4470-A261-225E9E8289F5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{758891B2-94B9-4470-A261-225E9E8289F5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{758891B2-94B9-4470-A261-225E9E8289F5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{758891B2-94B9-4470-A261-225E9E8289F5}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
