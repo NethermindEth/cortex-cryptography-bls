@@ -204,14 +204,7 @@ namespace Test.Bls
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
         [DllImport(@"bls384_256")]
         public static extern int blsInit(int curve, int compiledTimeVar);
-
-        //set ETH serialization mode for BLS12-381
-        //@param ETHserialization [in] 1:enable,  0:disable
-        //@note ignore the flag if curve is not BLS12-381
-        //BLS_DLL_API void blsSetETHserialization(int ETHserialization);
-        [DllImport(@"bls384_256")]
-        public static extern void blsSetETHserialization(int ETHserialization);
-
+        
         /*
 	        set secretKey if system has /dev/urandom or CryptGenRandom
 	        return 0 if success else -1
