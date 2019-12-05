@@ -35,6 +35,7 @@ namespace Test.Bls
         //uint64_t d[MCLBN_FP_UNIT_SIZE];
         //}
         //mclBnFp;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFp
         {
             public ulong d_0;
@@ -57,6 +58,7 @@ namespace Test.Bls
         //    mclBnFp d[2];
         //}
         //mclBnFp2;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFp2
         {
             public mclBnFp d_0;
@@ -75,6 +77,7 @@ namespace Test.Bls
         //    uint64_t d[MCLBN_FR_UNIT_SIZE];
         //    }
         //    mclBnFr;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFr
         {
             public ulong d_0;
@@ -95,6 +98,7 @@ namespace Test.Bls
         //    mclBnFp x, y, z;
         //    }
         //    mclBnG1;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnG1
         {
             public mclBnFp x;
@@ -112,6 +116,7 @@ namespace Test.Bls
         //    mclBnFp2 x, y, z;
         //}
         //mclBnG2;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnG2
         {
             public mclBnFp2 x;
@@ -128,6 +133,7 @@ namespace Test.Bls
         //    mclBnFr v;
         //    }
         //    blsSecretKey;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsSecretKey
         {
             public mclBnFr v;
@@ -146,6 +152,7 @@ namespace Test.Bls
         //#endif
         //}
         //blsPublicKey;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsPublicKey
         {
             public mclBnG1 v;
@@ -163,6 +170,7 @@ namespace Test.Bls
         //mclBnG1 v;
         //#endif
         //} blsSignature;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsSignature
         {
             public mclBnG2 v;
@@ -196,6 +204,13 @@ namespace Test.Bls
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
         [DllImport(@"bls384_256")]
         public static extern int blsInit(int curve, int compiledTimeVar);
+
+        //set ETH serialization mode for BLS12-381
+        //@param ETHserialization [in] 1:enable,  0:disable
+        //@note ignore the flag if curve is not BLS12-381
+        //BLS_DLL_API void blsSetETHserialization(int ETHserialization);
+        [DllImport(@"bls384_256")]
+        public static extern void blsSetETHserialization(int ETHserialization);
 
         /*
 	        set secretKey if system has /dev/urandom or CryptGenRandom
@@ -254,6 +269,9 @@ namespace Test.Bls
             var msg = "this is a pen";
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var msgSize = msgBytes.Length;
+
+//            blsSetETHserialization(1);
+//            Console.WriteLine("Eth serialization set");
 
             blsSecretKeySetByCSPRNG(out sec);
             Console.WriteLine("Secret key: {0}", sec);

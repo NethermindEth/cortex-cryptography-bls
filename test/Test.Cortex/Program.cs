@@ -79,9 +79,12 @@ namespace Test.Cortex
             Console.WriteLine("InitialX: [{0}] {1}", initialX.Length, HexMate.Convert.ToHexString(initialX));
 
             var signature = new byte[96];
+            
+            var verifySuccess0 = bls.VerifyHash(messageHash, signature, domain);
+            Console.WriteLine("Verify1: {0}", verifySuccess0);
+            
 //            var signatureSuccess = bls.TrySignHash(messageHash, signature.AsSpan(), out var bytesWritten, domain);
             var signatureSuccess = bls.TrySignHash(messageHash, signature.AsSpan(), out var bytesWritten);
-
             Console.WriteLine("Signature: {0} [{1}] {2}", signatureSuccess, bytesWritten, HexMate.Convert.ToHexString(signature));
 
             //var expectedSignature = HexMate.Convert.FromHexString("b9d1bf921b3dd048bdce38c2ceac2a2a8093c864881f2415f22b198de935ffa791707855c1656dc21a7af2d502bb46590151d645f062634c3b2cb79c4ed1c4a4b8b3f19f0f5c76965c651553e83d153ff95353735156eff77692f7a62ae653fb");
