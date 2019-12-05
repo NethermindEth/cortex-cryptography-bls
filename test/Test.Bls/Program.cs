@@ -211,41 +211,41 @@ namespace Test.Bls
         */
         // BLS_DLL_API int blsSecretKeySetByCSPRNG(blsSecretKey* sec);
         [DllImport(@"bls384_256")]
-        public static extern int blsSecretKeySetByCSPRNG(out blsSecretKey sec);
+        public static extern int blsSecretKeySetByCSPRNG([In, Out] ref blsSecretKey sec);
 
         // BLS_DLL_API void blsGetPublicKey(blsPublicKey* pub, const blsSecretKey* sec);
         [DllImport(@"bls384_256")]
-        public static extern int blsGetPublicKey(out blsPublicKey pub, blsSecretKey sec);
+        public static extern int blsGetPublicKey([In, Out] ref blsPublicKey pub, ref blsSecretKey sec);
 
         // calculate the has of m and sign the hash
         // BLS_DLL_API void blsSign(blsSignature* sig, const blsSecretKey* sec, const void* m, mclSize size);
         [DllImport(@"bls384_256")]
-        public static extern int blsSign(out blsSignature sig, blsSecretKey sec, byte[] m, int size);
+        public static extern int blsSign([In, Out] ref blsSignature sig, ref blsSecretKey sec, byte[] m, int size);
 
         // return 1 if valid
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
         [DllImport(@"bls384_256")]
-        public static extern int blsVerify(blsSignature sig, blsPublicKey pub, byte[] m, int size);
+        public static extern int blsVerify(ref blsSignature sig, ref blsPublicKey pub, byte[] m, int size);
 
         //BLS_DLL_API mclSize blsPublicKeyDeserialize(blsPublicKey* pub, const void* buf, mclSize bufSize);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsPublicKeyDeserialize(out blsPublicKey pub, byte* buf, int bufSize);
+        public static extern unsafe int blsPublicKeyDeserialize([In, Out] ref blsPublicKey pub, byte* buf, int bufSize);
 
         //BLS_DLL_API mclSize blsPublicKeySerialize(void *buf, mclSize maxBufSize, const blsPublicKey *pub);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsPublicKeySerialize(byte* buf, int maxBufSize, in blsPublicKey pub);
+        public static extern unsafe int blsPublicKeySerialize(byte* buf, int maxBufSize, ref blsPublicKey pub);
 
         // return read byte size if success else 0
         //BLS_DLL_API mclSize blsIdDeserialize(blsId* id, const void* buf, mclSize bufSize);
         //BLS_DLL_API mclSize blsSecretKeyDeserialize(blsSecretKey* sec, const void* buf, mclSize bufSize);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsSecretKeyDeserialize(out blsSecretKey sec, byte* buf, int bufSize);
+        public static extern unsafe int blsSecretKeyDeserialize([In, Out] ref blsSecretKey sec, byte* buf, int bufSize);
 
         // return written byte size if success else 0
         //BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);
         //BLS_DLL_API mclSize blsSecretKeySerialize(void *buf, mclSize maxBufSize, const blsSecretKey *sec);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, blsSecretKey sec);
+        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, ref blsSecretKey sec);
 
         //set ETH serialization mode for BLS12-381
         //@param ETHserialization [in] 1:enable,  0:disable
@@ -283,9 +283,6 @@ namespace Test.Bls
 
         static void bls_use_stackTest()
         {
-            blsSecretKey sec;
-            blsPublicKey pub;
-            blsSignature sig;
             var msg = "this is a pen";
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var msgSize = msgBytes.Length;
@@ -301,18 +298,28 @@ namespace Test.Bls
 
             Console.WriteLine("Serialized private key: {0}", BitConverter.ToString(privateKeyBytes));
 
+            var sec = new blsSecretKey();
             unsafe
             {
                 fixed (byte* privateKeyPtr = privateKeyBytes)
                 {
-                    blsSecretKeyDeserialize(out sec, privateKeyPtr, privateKeyBytes.Length);
+                    blsSecretKeyDeserialize(ref sec, privateKeyPtr, privateKeyBytes.Length);
                 }
             }
             //blsSecretKeySetByCSPRNG(out sec);
             Console.WriteLine("Secret key: {0}", sec);
             Console.WriteLine();
 
-            blsGetPublicKey(out pub, sec);
+            var pub = new blsPublicKey();
+            blsGetPublicKey(ref pub, ref sec);
+//            unsafe
+//            {
+//                fixed (blsPublicKey* pubPtr = pub)
+//                fixed (blsSecretKey* secPtr = sec)
+//                {
+//                    blsGetPublicKey(pubPtr, secPtr);
+//                }
+//            }
             Console.WriteLine("Public key: {0}", pub);
             Console.WriteLine();
 
@@ -321,25 +328,26 @@ namespace Test.Bls
             {
                 fixed (byte* ptr = buffer)
                 {
-                    blsPublicKeySerialize(ptr, buffer.Length, in pub);
+                    blsPublicKeySerialize(ptr, buffer.Length, ref pub);
                 }
             }
             Console.WriteLine("Expecting public key b301803f...");
             Console.WriteLine("Serialized public key: {0}", BitConverter.ToString(buffer.ToArray()));
 
-            blsSignature sig0 = new blsSignature();
-            int ret0 = blsVerify(sig0, pub, msgBytes, msgSize);
+            var sig0 = new blsSignature();
+            var ret0 = blsVerify(ref sig0, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Fail {0}", ret0);
 
-            blsSign(out sig, sec, msgBytes, msgSize);
+            var sig = new blsSignature();
+            blsSign(ref sig, ref sec, msgBytes, msgSize);
             Console.WriteLine("Signature : {0}", sig);
             Console.WriteLine();
 
-            int ret = blsVerify(sig, pub, msgBytes, msgSize);
+            int ret = blsVerify(ref sig, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Result {0}", ret);
 
             msgBytes[0]++;
-            int ret2 = blsVerify(sig, pub, msgBytes, msgSize);
+            int ret2 = blsVerify(ref sig, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Result after tamper {0}", ret2);
         }
     }
