@@ -16,7 +16,7 @@ Based on the Herumi cryptography library, https://github.com/herumi/bls.
 
 ### Pre-requisites
 
-* .NET Core 3.0 development tools
+* .NET Core 3.0 development tools (SDK)
 
 ### Compile and run tests
 
@@ -29,6 +29,7 @@ dotnet test test/Cortex.Cryptography.Bls.Tests --verbosity normal
 ### Optional requirements
 
 * PowerShell Core, to run build scripts
+* .NET Core 2.1 runtime, to run GitVersion during build
 * An editor, e.g. VS Code, if you want to contribute
 
 ### Compile, test and package
@@ -55,7 +56,7 @@ Library implementation from https://github.com/herumi/bls
 
 This has already been compiled and is in the lib folder.
 
-To re-generate (not usually needed):
+To re-generate (not usually needed), on Windows:
 
 * Install Visual Studio C++ tools
 * Get BLS, MCL, and cybozulib_ext projects
@@ -64,6 +65,11 @@ To re-generate (not usually needed):
 * Call "mklib.bat dll" for MCL, then BLS, as per instructions
 * (Can also compile and run test projects, as per instructions; NOTE: will use the modified setvar as above)
 * Copy the output DLL from "bin" folder to the library folder for Cortex
+
+On Linux:
+
+* In mcl folder, run: make lib/libmcl.a
+* In bls folder, run: make BLS_ETH=1 lib/libbls384_256.so
 
 ## License
 

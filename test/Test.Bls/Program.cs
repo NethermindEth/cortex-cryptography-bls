@@ -28,13 +28,14 @@ namespace Test.Bls
         const int MCLBN_FR_UNIT_SIZE = 4;
 
         //#define MCLBN_COMPILED_TIME_VAR ((MCLBN_FR_UNIT_SIZE) * 10 + (MCLBN_FP_UNIT_SIZE))
-        // The +100 is for BLS_SWAP_G
-        public const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
+        // (the +200 is for BLS_ETH)
+        const int MCLBN_COMPILED_TIME_VAR = MCLBN_FR_UNIT_SIZE * 10 + MCLBN_FP_UNIT_SIZE + 200;
 
         //typedef struct {
         //uint64_t d[MCLBN_FP_UNIT_SIZE];
         //}
         //mclBnFp;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFp
         {
             public ulong d_0;
@@ -57,6 +58,7 @@ namespace Test.Bls
         //    mclBnFp d[2];
         //}
         //mclBnFp2;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFp2
         {
             public mclBnFp d_0;
@@ -75,6 +77,7 @@ namespace Test.Bls
         //    uint64_t d[MCLBN_FR_UNIT_SIZE];
         //    }
         //    mclBnFr;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnFr
         {
             public ulong d_0;
@@ -95,6 +98,7 @@ namespace Test.Bls
         //    mclBnFp x, y, z;
         //    }
         //    mclBnG1;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnG1
         {
             public mclBnFp x;
@@ -112,6 +116,7 @@ namespace Test.Bls
         //    mclBnFp2 x, y, z;
         //}
         //mclBnG2;
+        [StructLayout(LayoutKind.Sequential)]
         public struct mclBnG2
         {
             public mclBnFp2 x;
@@ -128,6 +133,7 @@ namespace Test.Bls
         //    mclBnFr v;
         //    }
         //    blsSecretKey;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsSecretKey
         {
             public mclBnFr v;
@@ -146,6 +152,7 @@ namespace Test.Bls
         //#endif
         //}
         //blsPublicKey;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsPublicKey
         {
             public mclBnG1 v;
@@ -163,6 +170,7 @@ namespace Test.Bls
         //mclBnG1 v;
         //#endif
         //} blsSignature;
+        [StructLayout(LayoutKind.Sequential)]
         public struct blsSignature
         {
             public mclBnG2 v;
@@ -196,41 +204,48 @@ namespace Test.Bls
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
         [DllImport(@"bls384_256")]
         public static extern int blsInit(int curve, int compiledTimeVar);
-
+        
         /*
 	        set secretKey if system has /dev/urandom or CryptGenRandom
 	        return 0 if success else -1
         */
         // BLS_DLL_API int blsSecretKeySetByCSPRNG(blsSecretKey* sec);
         [DllImport(@"bls384_256")]
-        public static extern int blsSecretKeySetByCSPRNG(out blsSecretKey sec);
+        public static extern int blsSecretKeySetByCSPRNG([In, Out] ref blsSecretKey sec);
 
         // BLS_DLL_API void blsGetPublicKey(blsPublicKey* pub, const blsSecretKey* sec);
         [DllImport(@"bls384_256")]
-        public static extern int blsGetPublicKey(out blsPublicKey pub, blsSecretKey sec);
+        public static extern int blsGetPublicKey([In, Out] ref blsPublicKey pub, ref blsSecretKey sec);
 
         // calculate the has of m and sign the hash
         // BLS_DLL_API void blsSign(blsSignature* sig, const blsSecretKey* sec, const void* m, mclSize size);
         [DllImport(@"bls384_256")]
-        public static extern int blsSign(out blsSignature sig, blsSecretKey sec, byte[] m, int size);
+        public static extern int blsSign([In, Out] ref blsSignature sig, ref blsSecretKey sec, byte[] m, int size);
 
         // return 1 if valid
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
         [DllImport(@"bls384_256")]
-        public static extern int blsVerify(blsSignature sig, blsPublicKey pub, byte[] m, int size);
+        public static extern int blsVerify(ref blsSignature sig, ref blsPublicKey pub, byte[] m, int size);
 
+        //BLS_DLL_API mclSize blsPublicKeyDeserialize(blsPublicKey* pub, const void* buf, mclSize bufSize);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsPublicKeyDeserialize([In, Out] ref blsPublicKey pub, byte* buf, int bufSize);
+
+        //BLS_DLL_API mclSize blsPublicKeySerialize(void *buf, mclSize maxBufSize, const blsPublicKey *pub);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsPublicKeySerialize(byte* buf, int maxBufSize, ref blsPublicKey pub);
 
         // return read byte size if success else 0
         //BLS_DLL_API mclSize blsIdDeserialize(blsId* id, const void* buf, mclSize bufSize);
         //BLS_DLL_API mclSize blsSecretKeyDeserialize(blsSecretKey* sec, const void* buf, mclSize bufSize);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsSecretKeyDeserialize(out blsSecretKey sec, byte* buf, int bufSize);
+        public static extern unsafe int blsSecretKeyDeserialize([In, Out] ref blsSecretKey sec, byte* buf, int bufSize);
 
         // return written byte size if success else 0
         //BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);
         //BLS_DLL_API mclSize blsSecretKeySerialize(void *buf, mclSize maxBufSize, const blsSecretKey *sec);
         [DllImport(@"bls384_256")]
-        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, blsSecretKey sec);
+        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, ref blsSecretKey sec);
 
         //set ETH serialization mode for BLS12-381
         //@param ETHserialization [in] 1:enable,  0:disable
@@ -242,7 +257,7 @@ namespace Test.Bls
 
         static void Main(string[] args)
         {
-            Console.WriteLine("Test BLS");
+            Console.WriteLine("Test BLS, LE={0}", BitConverter.IsLittleEndian);
             Console.WriteLine();
 
             var curveType = MCL_BLS12_381;
@@ -253,20 +268,27 @@ namespace Test.Bls
             Console.WriteLine("Init Result {0}", ret);
             Console.WriteLine();
 
-            bls_use_stackTest();
+            try 
+            {
+                bls_use_stackTest();
+
+                Console.WriteLine("Finished. Press ENTER to exit.");
+                Console.ReadLine();
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine("Exception: {0}", ex);
+            }
         }
 
         static void bls_use_stackTest()
         {
-            blsSecretKey sec;
-            blsPublicKey pub;
-            blsSignature sig;
             var msg = "this is a pen";
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var msgSize = msgBytes.Length;
 
-            blsSetETHserialization(1);
-            Console.WriteLine("Eth serialization set");
+            //blsSetETHserialization(1);
+            //Console.WriteLine("Eth serialization set");
 
             var privateKeyBytes = new byte[] {
                 0x47, 0xb8, 0x19, 0x2d, 0x77, 0xbf, 0x87, 0x1b,
@@ -274,34 +296,58 @@ namespace Test.Bls
                 0x25, 0x72, 0x4a, 0x5c, 0x03, 0x1a, 0xfe, 0xab,
                 0xc6, 0x0b, 0xce, 0xf5, 0xff, 0x66, 0x51, 0x38 };
 
+            Console.WriteLine("Serialized private key: {0}", BitConverter.ToString(privateKeyBytes));
+
+            var sec = new blsSecretKey();
             unsafe
             {
                 fixed (byte* privateKeyPtr = privateKeyBytes)
                 {
-                    blsSecretKeyDeserialize(out sec, privateKeyPtr, privateKeyBytes.Length);
+                    blsSecretKeyDeserialize(ref sec, privateKeyPtr, privateKeyBytes.Length);
                 }
             }
             //blsSecretKeySetByCSPRNG(out sec);
             Console.WriteLine("Secret key: {0}", sec);
             Console.WriteLine();
 
-            blsGetPublicKey(out pub, sec);
+            var pub = new blsPublicKey();
+            blsGetPublicKey(ref pub, ref sec);
+//            unsafe
+//            {
+//                fixed (blsPublicKey* pubPtr = pub)
+//                fixed (blsSecretKey* secPtr = sec)
+//                {
+//                    blsGetPublicKey(pubPtr, secPtr);
+//                }
+//            }
             Console.WriteLine("Public key: {0}", pub);
             Console.WriteLine();
 
-            blsSignature sig0 = new blsSignature();
-            int ret0 = blsVerify(sig0, pub, msgBytes, msgSize);
+            var buffer = new Span<byte>(new byte[48]);
+            unsafe
+            {
+                fixed (byte* ptr = buffer)
+                {
+                    blsPublicKeySerialize(ptr, buffer.Length, ref pub);
+                }
+            }
+            Console.WriteLine("Expecting public key b301803f...");
+            Console.WriteLine("Serialized public key: {0}", BitConverter.ToString(buffer.ToArray()));
+
+            var sig0 = new blsSignature();
+            var ret0 = blsVerify(ref sig0, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Fail {0}", ret0);
 
-            blsSign(out sig, sec, msgBytes, msgSize);
+            var sig = new blsSignature();
+            blsSign(ref sig, ref sec, msgBytes, msgSize);
             Console.WriteLine("Signature : {0}", sig);
             Console.WriteLine();
 
-            int ret = blsVerify(sig, pub, msgBytes, msgSize);
+            int ret = blsVerify(ref sig, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Result {0}", ret);
 
             msgBytes[0]++;
-            int ret2 = blsVerify(sig, pub, msgBytes, msgSize);
+            int ret2 = blsVerify(ref sig, ref pub, msgBytes, msgSize);
             Console.WriteLine("Verify Result after tamper {0}", ret2);
         }
     }

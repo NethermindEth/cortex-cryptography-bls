@@ -155,18 +155,18 @@ namespace Cortex.Cryptography
         /// <summary>
         /// Gets the serialized private (secret) key, if available.
         /// </summary>
-        /// <param name="desination">Span to write the key to.</param>
+        /// <param name="destination">Span to write the key to.</param>
         /// <param name="bytesWritten">Output the number of bytes written.</param>
         /// <returns>true if the private key is available; false if the private key is not available or if the destination is not large enough to hold the result</returns>
-        public abstract bool TryExportBLSPrivateKey(Span<byte> desination, out int bytesWritten);
+        public abstract bool TryExportBLSPrivateKey(Span<byte> destination, out int bytesWritten);
 
         /// <summary>
         /// Gets the serialized public key.
         /// </summary>
-        /// <param name="desination">Span to write the key to.</param>
+        /// <param name="destination">Span to write the key to.</param>
         /// <param name="bytesWritten">Output the number of bytes written.</param>
         /// <returns>true if successful; false if the destination is not large enough to hold the result</returns>
-        public abstract bool TryExportBLSPublicKey(Span<byte> desination, out int bytesWritten);
+        public abstract bool TryExportBLSPublicKey(Span<byte> destination, out int bytesWritten);
 
         /// <summary>
         /// Hash and then sign the data (with optional domain).

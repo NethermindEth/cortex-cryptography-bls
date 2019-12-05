@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Security.Cryptography;
 
 namespace Cortex.Cryptography
@@ -90,23 +91,23 @@ namespace Cortex.Cryptography
 
             EnsureInitialised();
 
-            Bls384Interop.BlsPublicKey aggregateBlsPublicKey = default;
+            var aggregateBlsPublicKey = default(Bls384Interop.BlsPublicKey);
             for (var index = 0; index < publicKeys.Length; index += PublicKeyLength)
             {
                 var publicKeySlice = publicKeys.Slice(index, PublicKeyLength);
-                Bls384Interop.BlsPublicKey blsPublicKey;
-                int publickKeyBytesRead;
+                var blsPublicKey = default(Bls384Interop.BlsPublicKey);
+                int publicKeyBytesRead;
                 unsafe
                 {
                     // Using fixed pointer for input data allows us to pass a slice
                     fixed (byte* publicKeyPtr = publicKeySlice)
                     {
-                        publickKeyBytesRead = Bls384Interop.PublicKeyDeserialize(out blsPublicKey, publicKeyPtr, PublicKeyLength);
+                        publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(ref blsPublicKey, publicKeyPtr, PublicKeyLength);
                     }
                 }
-                if (publickKeyBytesRead != PublicKeyLength)
+                if (publicKeyBytesRead != PublicKeyLength)
                 {
-                    throw new Exception($"Error deserializing BLS public key, length: {publickKeyBytesRead}");
+                    throw new Exception($"Error deserializing BLS public key, length: {publicKeyBytesRead}");
                 }
                 if (index == 0)
                 {
@@ -114,7 +115,7 @@ namespace Cortex.Cryptography
                 }
                 else
                 {
-                    Bls384Interop.PublicKeyAdd(ref aggregateBlsPublicKey, blsPublicKey);
+                    Bls384Interop.PublicKeyAdd(ref aggregateBlsPublicKey, ref blsPublicKey);
                 }
             }
 
@@ -123,7 +124,7 @@ namespace Cortex.Cryptography
                 // Using fixed pointer for output data allows us to write directly to destination
                 fixed (byte* destinationPtr = destination)
                 {
-                    bytesWritten = Bls384Interop.PublicKeySerialize(destinationPtr, PublicKeyLength, aggregateBlsPublicKey);
+                    bytesWritten = Bls384Interop.PublicKeySerialize(destinationPtr, PublicKeyLength, ref aggregateBlsPublicKey);
                 }
             }
             if (bytesWritten != PublicKeyLength)
@@ -149,18 +150,18 @@ namespace Cortex.Cryptography
 
             EnsureInitialised();
 
-            Bls384Interop.BlsSignature aggregateBlsSignature = default;
+            var aggregateBlsSignature = default(Bls384Interop.BlsSignature);
             for (var index = 0; index < signatures.Length; index += SignatureLength)
             {
                 var signatureSlice = signatures.Slice(index, SignatureLength);
-                Bls384Interop.BlsSignature blsSignature;
+                var blsSignature = default(Bls384Interop.BlsSignature);
                 int signatureBytesRead;
                 unsafe
                 {
                     // Using fixed pointer for input data allows us to pass a slice
                     fixed (byte* signaturePtr = signatureSlice)
                     {
-                        signatureBytesRead = Bls384Interop.SignatureDeserialize(out blsSignature, signaturePtr, SignatureLength);
+                        signatureBytesRead = Bls384Interop.SignatureDeserialize(ref blsSignature, signaturePtr, SignatureLength);
                     }
                 }
                 if (signatureBytesRead != SignatureLength)
@@ -173,7 +174,7 @@ namespace Cortex.Cryptography
                 }
                 else
                 {
-                    Bls384Interop.SignatureAdd(ref aggregateBlsSignature, blsSignature);
+                    Bls384Interop.SignatureAdd(ref aggregateBlsSignature, ref blsSignature);
                 }
             }
 
@@ -182,7 +183,7 @@ namespace Cortex.Cryptography
                 // Using fixed pointer for output data allows us to write directly to destination
                 fixed (byte* destinationPtr = destination)
                 {
-                    bytesWritten = Bls384Interop.SignatureSerialize(destinationPtr, SignatureLength, aggregateBlsSignature);
+                    bytesWritten = Bls384Interop.SignatureSerialize(destinationPtr, SignatureLength, ref aggregateBlsSignature);
                 }
             }
             if (bytesWritten != SignatureLength)
@@ -231,36 +232,36 @@ namespace Cortex.Cryptography
         }
 
         /// <inheritdoc />
-        public override bool TryExportBLSPrivateKey(Span<byte> desination, out int bytesWritten)
+        public override bool TryExportBLSPrivateKey(Span<byte> destination, out int bytesWritten)
         {
             if (_privateKey == null)
             {
                 throw new CryptographicException("The key could not be exported.");
             }
-            if (desination.Length < _privateKey.Length)
+            if (destination.Length < _privateKey.Length)
             {
                 bytesWritten = 0;
                 return false;
             }
-            _privateKey.CopyTo(desination);
+            _privateKey.CopyTo(destination);
             bytesWritten = _privateKey.Length;
             return true;
         }
 
         /// <inheritdoc />
-        public override bool TryExportBLSPublicKey(Span<byte> desination, out int bytesWritten)
+        public override bool TryExportBLSPublicKey(Span<byte> destination, out int bytesWritten)
         {
             EnsurePublicKey();
             if (_publicKey == null)
             {
                 throw new CryptographicException("The key could not be exported.");
             }
-            if (desination.Length < _publicKey.Length)
+            if (destination.Length < _publicKey.Length)
             {
                 bytesWritten = 0;
                 return false;
             }
-            _publicKey.CopyTo(desination);
+            _publicKey.CopyTo(destination);
             bytesWritten = _publicKey.Length;
             return true;
         }
@@ -285,13 +286,13 @@ namespace Cortex.Cryptography
             // TODO: Generate random key if null
             // EnsurePrivateKey();
 
-            Bls384Interop.BlsSecretKey blsSecretKey;
+            var blsSecretKey = default(Bls384Interop.BlsSecretKey);
             int bytesRead;
             unsafe
             {
                 fixed (byte* privateKeyPtr = _privateKey)
                 {
-                    bytesRead = Bls384Interop.SecretKeyDeserialize(out blsSecretKey, privateKeyPtr, _privateKey!.Length);
+                    bytesRead = Bls384Interop.SecretKeyDeserialize(ref blsSecretKey, privateKeyPtr, _privateKey!.Length);
                 }
             }
             if (bytesRead != _privateKey.Length)
@@ -299,7 +300,7 @@ namespace Cortex.Cryptography
                 throw new Exception($"Error deserializing BLS private key, length: {bytesRead}");
             }
 
-            Bls384Interop.BlsSignature blsSignature;
+            var blsSignature = default(Bls384Interop.BlsSignature);
             int result;
 
             if (domain.Length > 0)
@@ -321,7 +322,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = hashWithDomain)
                     {
-                        result = Bls384Interop.SignHashWithDomain(out blsSignature, blsSecretKey, hashPtr);
+                        result = Bls384Interop.SignHashWithDomain(ref blsSignature, ref blsSecretKey, hashPtr);
                     }
                 }
             }
@@ -331,10 +332,33 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = hash)
                     {
-                        result = Bls384Interop.SignHash(out blsSignature, blsSecretKey, hashPtr, hash.Length);
+                        result = Bls384Interop.SignHash(ref blsSignature, ref blsSecretKey, hashPtr, hash.Length);
                     }
                 }
             }
+
+            // ReadOnlySpan<byte> hashToSign;
+            // if (domain.Length > 0)
+            // {
+            //     var combined = new byte[2 * InitialXPartLength];
+            //     var combineSuccess = TryCombineHashAndDomain(hash, domain, combined, out var combineBytesWritten);
+            //     if (!combineSuccess || combineBytesWritten != 2 * InitialXPartLength)
+            //     {
+            //         throw new Exception("Error combining the hash and domain.");
+            //     }
+            //     hashToSign = combined;
+            // }
+            // else
+            // {
+            //     hashToSign = hash;
+            // }
+            // unsafe
+            // {
+            //     fixed (byte* hashPtr = hash)
+            //     {
+            //         result = Bls384Interop.SignHash(out blsSignature, blsSecretKey, hashPtr, hash.Length);
+            //     }
+            // }
 
             if (result != 0)
             {
@@ -345,7 +369,7 @@ namespace Cortex.Cryptography
             {
                 fixed (byte* destinationPtr = destination)
                 {
-                    bytesWritten = Bls384Interop.SignatureSerialize(destinationPtr, SignatureLength, blsSignature);
+                    bytesWritten = Bls384Interop.SignatureSerialize(destinationPtr, SignatureLength, ref blsSignature);
                 }
             }
             if (bytesWritten != SignatureLength)
@@ -386,7 +410,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* publicKeyPtr = publicKey)
                     {
-                        publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(out blsPublicKeys[blsPublicKeyIndex], publicKeyPtr, PublicKeyLength);
+                        publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(ref blsPublicKeys[blsPublicKeyIndex], publicKeyPtr, PublicKeyLength);
                     }
                 }
                 if (publicKeyBytesRead != PublicKeyLength)
@@ -396,13 +420,13 @@ namespace Cortex.Cryptography
                 publicKeysIndex += PublicKeyLength;
             }
 
-            Bls384Interop.BlsSignature aggregateBlsSignature;
+            var aggregateBlsSignature = default(Bls384Interop.BlsSignature);
             int signatureBytesRead;
             unsafe
             {
                 fixed (byte* signaturePtr = aggregateSignature)
                 {
-                    signatureBytesRead = Bls384Interop.SignatureDeserialize(out aggregateBlsSignature, signaturePtr, SignatureLength);
+                    signatureBytesRead = Bls384Interop.SignatureDeserialize(ref aggregateBlsSignature, signaturePtr, SignatureLength);
                 }
             }
             if (signatureBytesRead != aggregateSignature.Length)
@@ -439,7 +463,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = combined)
                     {
-                        result = Bls384Interop.VerifyAggregatedHashWithDomain(aggregateBlsSignature, blsPublicKeys, hashPtr, publicKeyCount);
+                        result = Bls384Interop.VerifyAggregatedHashWithDomain(ref aggregateBlsSignature, blsPublicKeys, hashPtr, publicKeyCount);
                     }
                 }
             }
@@ -449,7 +473,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = hashes)
                     {
-                        result = Bls384Interop.VerifyAggregateHashes(aggregateBlsSignature, blsPublicKeys, hashPtr, hashLength, publicKeyCount);
+                        result = Bls384Interop.VerifyAggregateHashes(ref aggregateBlsSignature, blsPublicKeys, hashPtr, hashLength, publicKeyCount);
                     }
                 }
             }
@@ -474,13 +498,13 @@ namespace Cortex.Cryptography
             EnsureInitialised();
             EnsurePublicKey();
 
-            Bls384Interop.BlsPublicKey blsPublicKey;
+            var blsPublicKey = default(Bls384Interop.BlsPublicKey);
             int publicKeyBytesRead;
             unsafe
             {
                 fixed (byte* publicKeyPtr = _publicKey)
                 {
-                    publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(out blsPublicKey, publicKeyPtr, _publicKey!.Length);
+                    publicKeyBytesRead = Bls384Interop.PublicKeyDeserialize(ref blsPublicKey, publicKeyPtr, _publicKey!.Length);
                 }
             }
             if (publicKeyBytesRead != _publicKey.Length)
@@ -488,13 +512,13 @@ namespace Cortex.Cryptography
                 throw new Exception($"Error deserializing BLS public key, length: {publicKeyBytesRead}");
             }
 
-            Bls384Interop.BlsSignature blsSignature;
+            var blsSignature = default(Bls384Interop.BlsSignature);
             int signatureBytesRead;
             unsafe
             {
                 fixed (byte* signaturePtr = signature)
                 {
-                    signatureBytesRead = Bls384Interop.SignatureDeserialize(out blsSignature, signaturePtr, SignatureLength);
+                    signatureBytesRead = Bls384Interop.SignatureDeserialize(ref blsSignature, signaturePtr, SignatureLength);
                 }
             }
             if (signatureBytesRead != signature.Length)
@@ -523,7 +547,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = hashWithDomain)
                     {
-                        result = Bls384Interop.VerifyHashWithDomain(blsSignature, blsPublicKey, hashPtr);
+                        result = Bls384Interop.VerifyHashWithDomain(ref blsSignature, ref blsPublicKey, hashPtr);
                     }
                 }
             }
@@ -533,7 +557,7 @@ namespace Cortex.Cryptography
                 {
                     fixed (byte* hashPtr = hash)
                     {
-                        result = Bls384Interop.VerifyHash(blsSignature, blsPublicKey, hashPtr, hash.Length);
+                        result = Bls384Interop.VerifyHash(ref blsSignature, ref blsPublicKey, hashPtr, hash.Length);
                     }
                 }
             }
@@ -565,13 +589,13 @@ namespace Cortex.Cryptography
 
                     // Standard values are big endian encoding (are using the Herumi deserialize / serialize)
 
-                    Bls384Interop.BlsSecretKey blsSecretKey;
+                    var blsSecretKey = default(Bls384Interop.BlsSecretKey);
                     int bytesRead;
                     unsafe
                     {
                         fixed (byte* ptr = _privateKey)
                         {
-                            bytesRead = Bls384Interop.SecretKeyDeserialize(out blsSecretKey, ptr, _privateKey.Length);
+                            bytesRead = Bls384Interop.SecretKeyDeserialize(ref blsSecretKey, ptr, _privateKey.Length);
                         }
                     }
                     if (bytesRead != _privateKey.Length)
@@ -579,7 +603,8 @@ namespace Cortex.Cryptography
                         throw new Exception($"Error deserializing BLS private key, length: {bytesRead}");
                     }
 
-                    Bls384Interop.GetPublicKey(out var blsPublicKey, blsSecretKey);
+                    var blsPublicKey = default(Bls384Interop.BlsPublicKey);
+                    Bls384Interop.GetPublicKey(ref blsPublicKey, ref blsSecretKey);
 
                     var buffer = new Span<byte>(new byte[PublicKeyLength]);
                     int bytesWritten;
@@ -587,7 +612,7 @@ namespace Cortex.Cryptography
                     {
                         fixed (byte* ptr = buffer)
                         {
-                            bytesWritten = Bls384Interop.PublicKeySerialize(ptr, buffer.Length, in blsPublicKey);
+                            bytesWritten = Bls384Interop.PublicKeySerialize(ptr, buffer.Length, ref blsPublicKey);
                         }
                     }
 
