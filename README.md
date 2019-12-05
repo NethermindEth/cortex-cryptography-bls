@@ -4,11 +4,11 @@ Cryptography library the implements the ETH 2.0 version of the Boneh–Lynn–Sh
 
 This is implemented as a System.Security.Cryptography.AsymmetricAlgorithm, and follows the patterns used by other .NET Core cryptography schemes.
 
-Supports converting private keys to public keys, signing and verifying ETH 2.0 message hash with domain, and aggregating multiple signatures.
+Supports converting private keys to public keys, signing and verifying ETH 2.0 message hash with domain, aggregating public keys and signatures, and verification of multiple public key/hash pairs against an aggregate signature.
 
-Does not yet support verifying aggregate signatures, signing (or verifying) unhashed data, or variants or schemes other than that used by ETH 2.0.
+Does not yet support signing (or verifying) unhashed data, or variants or schemes other than that used by ETH 2.0.
 
-Only implemented for Windows platform; does not yet support other platforms.
+Implemented for Windows and Linux; not yet tested on Mac or other platforms.
 
 Based on the Herumi cryptography library, https://github.com/herumi/bls.
 
