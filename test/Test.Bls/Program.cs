@@ -235,6 +235,26 @@ namespace Test.Bls
         public static extern int blsVerify(blsSignature sig, blsPublicKey pub, byte[] m, int size);
 
 
+        // return read byte size if success else 0
+        //BLS_DLL_API mclSize blsIdDeserialize(blsId* id, const void* buf, mclSize bufSize);
+        //BLS_DLL_API mclSize blsSecretKeyDeserialize(blsSecretKey* sec, const void* buf, mclSize bufSize);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsSecretKeyDeserialize(out blsSecretKey sec, byte* buf, int bufSize);
+
+        // return written byte size if success else 0
+        //BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);
+        //BLS_DLL_API mclSize blsSecretKeySerialize(void *buf, mclSize maxBufSize, const blsSecretKey *sec);
+        [DllImport(@"bls384_256")]
+        public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, blsSecretKey sec);
+
+        //set ETH serialization mode for BLS12-381
+        //@param ETHserialization [in] 1:enable,  0:disable
+        //@note ignore the flag if curve is not BLS12-381
+        //BLS_DLL_API void blsSetETHserialization(int ETHserialization);
+        [DllImport(@"bls384_256")]
+        public static extern void blsSetETHserialization(int ETHserialization);
+
+
         static void Main(string[] args)
         {
             Console.WriteLine("Test BLS, LE={0}", BitConverter.IsLittleEndian);
@@ -270,10 +290,23 @@ namespace Test.Bls
             var msgBytes = Encoding.UTF8.GetBytes(msg);
             var msgSize = msgBytes.Length;
 
-//            blsSetETHserialization(1);
-//            Console.WriteLine("Eth serialization set");
+            blsSetETHserialization(1);
+            Console.WriteLine("Eth serialization set");
 
-            blsSecretKeySetByCSPRNG(out sec);
+            var privateKeyBytes = new byte[] {
+                0x47, 0xb8, 0x19, 0x2d, 0x77, 0xbf, 0x87, 0x1b,
+                0x62, 0xe8, 0x78, 0x59, 0xd6, 0x53, 0x92, 0x27,
+                0x25, 0x72, 0x4a, 0x5c, 0x03, 0x1a, 0xfe, 0xab,
+                0xc6, 0x0b, 0xce, 0xf5, 0xff, 0x66, 0x51, 0x38 };
+
+            unsafe
+            {
+                fixed (byte* privateKeyPtr = privateKeyBytes)
+                {
+                    blsSecretKeyDeserialize(out sec, privateKeyPtr, privateKeyBytes.Length);
+                }
+            }
+            //blsSecretKeySetByCSPRNG(out sec);
             Console.WriteLine("Secret key: {0}", sec);
             Console.WriteLine();
 
@@ -281,10 +314,10 @@ namespace Test.Bls
             Console.WriteLine("Public key: {0}", pub);
             Console.WriteLine();
 
-            sig = new blsSignature();
-            Console.WriteLine("Test : {0}", sig);
+            blsSignature sig0 = new blsSignature();
+            int ret0 = blsVerify(sig0, pub, msgBytes, msgSize);
+            Console.WriteLine("Verify Fail {0}", ret0);
 
-            // BLS_DLL_API void blsSign(blsSignature *sig, const blsSecretKey *sec, const void *m, mclSize size);
             blsSign(out sig, sec, msgBytes, msgSize);
             Console.WriteLine("Signature : {0}", sig);
             Console.WriteLine();

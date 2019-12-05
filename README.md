@@ -71,13 +71,9 @@ On Linux:
 * In mcl folder, run: make lib/libmcl.a
 * In bls folder, run: make BLS_ETH=1 lib/libbls384_256.so
 
-## Contributions
-
-Donations (ETH) can be sent to 0x1a474C09EE765C17fbf35B8B0fcb28a2B0E6e6db
-
 ## License
 
-Copyright (C) 2019 Gryphon Technology Pty Ltd
+Copyright (C) 2019 Demerzel Solutions Limited
 
 This library is free software: you can redistribute it and/or modify it under the terms of the GNU Lesser General Public License as published by the Free Software Foundation, either version 3 of the License, or (at your option) any later version.
 
