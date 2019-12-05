@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <Product>Cortex Eth2.0 blockchain</Product>
     <Authors>sgryphon</Authors>
-    <Copyright>Copyright © 2019 Gryphon Technology Pty Ltd</Copyright>
+    <Copyright>Copyright © 2019 Demerzel Solutions Limited</Copyright>
     <Version>0.0.1</Version>
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
@@ -20,7 +20,7 @@ Based on the Herumi cryptography library.
     </Description>
     <PackageRequireLicenseAcceptance>true</PackageRequireLicenseAcceptance>
     <PackageLicenseExpression>LGPL-3.0-or-later</PackageLicenseExpression>
-    <PackageProjectUrl>https://github.com/sgryphon/cortex-cryptography-bls</PackageProjectUrl>
+    <PackageProjectUrl>https://github.com/NethermindEth/cortex-cryptography-bls</PackageProjectUrl>
     <PackageTags>BLS;Boneh-Lynn-Shacham;"Eth 2.0";Cryptography</PackageTags>
   </PropertyGroup>
 
