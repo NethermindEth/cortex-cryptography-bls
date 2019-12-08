@@ -6,7 +6,7 @@ This is implemented as a System.Security.Cryptography.AsymmetricAlgorithm, and f
 
 Supports converting private keys to public keys, signing and verifying ETH 2.0 message hash with domain, aggregating public keys and signatures, and verification of multiple public key/hash pairs against an aggregate signature.
 
-Cross platform for Windows, Linux, and OSX.
+Cross platform for Windows, Linux, and OSX. On Linux and OSX it also requires the GMP library to be installed.
 
 Does not yet support signing (or verifying) unhashed data, or variants or schemes other than that used by ETH 2.0.
 
