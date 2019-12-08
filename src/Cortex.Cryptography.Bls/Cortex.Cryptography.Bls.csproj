@@ -35,6 +35,9 @@ Based on the Herumi cryptography library.
     <None Include="..\..\lib\libbls384_256.so" Link="libbls384_256.so" Pack="true" PackagePath="runtimes\linux-x64\native">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
+    <None Include="..\..\lib\libbls384_256.dylib" Link="libbls384_256.dylib" Pack="true" PackagePath="runtimes\osx-x64\native">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
 
 </Project>

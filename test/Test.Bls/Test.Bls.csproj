@@ -13,9 +13,10 @@
     <None Include="..\..\lib\bls384_256.dll" Link="bls384_256.dll">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
-  </ItemGroup>
-  <ItemGroup>
     <None Include="..\..\lib\libbls384_256.so" Link="libbls384_256.so">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+    <None Include="..\..\lib\libbls384_256.dylib" Link="libbls384_256.dylib">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </None>
   </ItemGroup>

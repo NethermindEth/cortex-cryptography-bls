@@ -6,17 +6,29 @@ This is implemented as a System.Security.Cryptography.AsymmetricAlgorithm, and f
 
 Supports converting private keys to public keys, signing and verifying ETH 2.0 message hash with domain, aggregating public keys and signatures, and verification of multiple public key/hash pairs against an aggregate signature.
 
+Cross platform for Windows, Linux, and OSX.
+
 Does not yet support signing (or verifying) unhashed data, or variants or schemes other than that used by ETH 2.0.
 
-Implemented for Windows and Linux; not yet tested on Mac or other platforms.
-
-Based on the Herumi cryptography library, https://github.com/herumi/bls.
+Based on the Herumi cryptography library (native), https://github.com/herumi/bls.
 
 ## Getting started
 
 ### Pre-requisites
 
 * .NET Core 3.0 development tools (SDK)
+
+On Linux and OSX you also need GMP installed (large number library).
+
+Ubuntu:
+```
+apt install libgmp-dev
+```
+
+OSX:
+```
+brew install gmp
+```
 
 ### Compile and run tests
 
@@ -66,7 +78,7 @@ To re-generate (not usually needed), on Windows:
 * (Can also compile and run test projects, as per instructions; NOTE: will use the modified setvar as above)
 * Copy the output DLL from "bin" folder to the library folder for Cortex
 
-On Linux:
+On Linux and OSX:
 
 * In mcl folder, run: make lib/libmcl.a
 * In bls folder, run: make BLS_ETH=1 lib/libbls384_256.so
