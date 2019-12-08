@@ -12,6 +12,8 @@ namespace Test.Bls
 
     class Program
     {
+        const string DllName = "bls384_256";
+
         // 	MCL_BLS12_381 = 5,
         const int MCL_BLS12_381 = 5;
 
@@ -202,7 +204,7 @@ namespace Test.Bls
 	        @note blsInit() is not thread safe
         */
         // BLS_DLL_API int blsInit(int curve, int compiledTimeVar);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern int blsInit(int curve, int compiledTimeVar);
         
         /*
@@ -210,48 +212,48 @@ namespace Test.Bls
 	        return 0 if success else -1
         */
         // BLS_DLL_API int blsSecretKeySetByCSPRNG(blsSecretKey* sec);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern int blsSecretKeySetByCSPRNG([In, Out] ref blsSecretKey sec);
 
         // BLS_DLL_API void blsGetPublicKey(blsPublicKey* pub, const blsSecretKey* sec);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern int blsGetPublicKey([In, Out] ref blsPublicKey pub, ref blsSecretKey sec);
 
         // calculate the has of m and sign the hash
         // BLS_DLL_API void blsSign(blsSignature* sig, const blsSecretKey* sec, const void* m, mclSize size);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern int blsSign([In, Out] ref blsSignature sig, ref blsSecretKey sec, byte[] m, int size);
 
         // return 1 if valid
         // BLS_DLL_API int blsVerify(const blsSignature* sig, const blsPublicKey* pub, const void* m, mclSize size);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern int blsVerify(ref blsSignature sig, ref blsPublicKey pub, byte[] m, int size);
 
         //BLS_DLL_API mclSize blsPublicKeyDeserialize(blsPublicKey* pub, const void* buf, mclSize bufSize);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern unsafe int blsPublicKeyDeserialize([In, Out] ref blsPublicKey pub, byte* buf, int bufSize);
 
         //BLS_DLL_API mclSize blsPublicKeySerialize(void *buf, mclSize maxBufSize, const blsPublicKey *pub);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern unsafe int blsPublicKeySerialize(byte* buf, int maxBufSize, ref blsPublicKey pub);
 
         // return read byte size if success else 0
         //BLS_DLL_API mclSize blsIdDeserialize(blsId* id, const void* buf, mclSize bufSize);
         //BLS_DLL_API mclSize blsSecretKeyDeserialize(blsSecretKey* sec, const void* buf, mclSize bufSize);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern unsafe int blsSecretKeyDeserialize([In, Out] ref blsSecretKey sec, byte* buf, int bufSize);
 
         // return written byte size if success else 0
         //BLS_DLL_API mclSize blsIdSerialize(void *buf, mclSize maxBufSize, const blsId *id);
         //BLS_DLL_API mclSize blsSecretKeySerialize(void *buf, mclSize maxBufSize, const blsSecretKey *sec);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern unsafe int blsSecretKeySerialize(byte* buf, int maxBufSize, ref blsSecretKey sec);
 
         //set ETH serialization mode for BLS12-381
         //@param ETHserialization [in] 1:enable,  0:disable
         //@note ignore the flag if curve is not BLS12-381
         //BLS_DLL_API void blsSetETHserialization(int ETHserialization);
-        [DllImport(@"bls384_256")]
+        [DllImport(DllName)]
         public static extern void blsSetETHserialization(int ETHserialization);
 
 
